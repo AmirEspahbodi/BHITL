@@ -19,17 +19,23 @@ services:
     image: postgres:18.1-alpine3.23
     container_name: postgres
     restart: always
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB_NAME}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      PGDATA: /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - app-db-data:/var/lib/postgresql/data/pgdata
+    env_file:
+      - .env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_DB=${POSTGRES_DB_NAME?Variable not set}
     ports:
       - "8080:5432"
-    env_file:
-      - ./.env
 
   pgadmin:
     container_name: pgadmin
@@ -50,5 +56,5 @@ services:
       - ./.env
 
 volumes:
-  postgres_data:
+  app-db-data:
   pgadmin-data:
