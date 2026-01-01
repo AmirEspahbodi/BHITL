@@ -2,18 +2,76 @@
 name = "hitlb"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "amir.espahbodi",email = "dev.amir.espahbodi@gmail.com"}
-]
-readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10,<4.0"
 dependencies = [
+    "fastapi[standard] (>=0.125.0,<0.126.0)",
+    "python-multipart<1.0.0,>=0.0.7",
+    "email-validator<3.0.0.0,>=2.1.0.post1",
+    "passlib[bcrypt] (>=1.7.4,<2.0.0)",
+    "tenacity<9.0.0,>=8.2.3",
+    "pydantic>2.0",
+    "emails<1.0,>=0.6",
+    "jinja2<4.0.0,>=3.1.4",
+    "alembic<2.0.0,>=1.12.1",
+    "httpx<1.0.0,>=0.25.1",
+    "psycopg[binary] (>=3.3.2,<4.0.0)",
+    "sqlmodel<1.0.0,>=0.0.21",
+    # Pin bcrypt until passlib supports the latest
+    # "bcrypt==4.3.0",
+    "pydantic-settings<3.0.0,>=2.2.1",
+    "sentry-sdk[fastapi] (>=2.48.0,<3.0.0)",
+    "pyjwt<3.0.0,>=2.8.0",
+    "sqlalchemy[asyncio] (>=2.0.45,<3.0.0)",
+    "uvicorn (>=0.38.0,<0.39.0)",
+    "rsa (>=4.9.1,<5.0.0)",
+    "cryptography (>=46.0.3,<47.0.0)",
+    # "asyncmy (>=0.2.10,<0.3.0)",
+    # "python-jose[cryptography] (>=3.5.0,<4.0.0)",
 ]
-
-[tool.poetry]
-packages = [{include = "hitlb", from = "src"}]
 
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.mypy]
+strict = true
+exclude = ["venv", ".venv", "alembic"]
+
+[tool.ruff]
+target-version = "py313"
+exclude = ["alembic"]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ARG001", # unused arguments in functions
+    "T201",   # print statements are not allowed
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "W191",  # indentation contains tabs
+    "B904",  # Allow raising exceptions without from e, for HTTPException
+]
+
+[tool.ruff.lint.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true
+
+[tool.coverage.run]
+source = ["app"]
+dynamic_context = "test_function"
+
+[tool.coverage.report]
+show_missing = true
+sort = "-Cover"
+
+[tool.coverage.html]
+show_contexts = true
