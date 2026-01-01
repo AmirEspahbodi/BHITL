@@ -40,12 +40,21 @@ class UpdatePassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
+class UserCommentRevision(SQLModel, table=True):
+    user_id: uuid.UUID = Field(foreign_key="user.id", primary_key=True)
+    comment_id: int = Field(foreign_key="comment.id", primary_key=True)
+    expert_opinion: str | None = None
+    revised_at: datetime | None = None
+
+
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
-    revised_comments: list["Comment"] = Relationship(back_populates="reviser")
+    revised_comments: list["Comment"] = Relationship(
+        back_populates="revisers", link_model=UserCommentRevision
+    )
 
 
 # Properties to return via API, id is always required
@@ -117,7 +126,7 @@ class NewPassword(SQLModel):
 
 class Principle(UserBase, table=True):
     id: int = Field(primary_key=True)
-    label_name: str
+    name: str
     definition: str
     inclusion_criteria: str | None = None
     exclusion_criteria: str | None = None
@@ -134,18 +143,15 @@ class Comment(UserBase, table=True):
     A1_Score: int
     A2_Score: int
     A3_Score: int
-    principle_id: int | None = Field(default=None, foreign_key="principle.id")
     llm_justification: str | None = Field(
         default=None, sa_column_kwargs={"nullable": True}
     )
     llm_evidence_quote: str | None = None
-    expert_opinion: str | None = None
-    is_revised: bool = Field(default=False)
-    reviser_username: str | None = None
-    revision_timestamp: datetime | None = None
+    principle_id: int | None = Field(default=None, foreign_key="principle.id")
     principle: Principle | None = Relationship(back_populates="comments")
-    reviser_id: uuid.UUID | None = Field(default=None, foreign_key="user.id")
-    reviser: User | None = Relationship(back_populates="revised_comments")
+    revisers: list["User"] = Relationship(
+        back_populates="revised_comments", link_model=UserCommentRevision
+    )
 
 
 class PrincipleUpdate(UserBase):
