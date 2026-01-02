@@ -83,7 +83,10 @@ def recover_password(email: str, session: SessionDep) -> Message:
     user = crud.get_user_by_email(session=session, email=email)
 
     if user:  # Only send email if user exists
-        password_reset_token = generate_password_reset_token(email=email)
+        # Pass session to generate function to persist token
+        password_reset_token = generate_password_reset_token(
+            session=session, email=email
+        )
         email_data = generate_reset_password_email(
             email_to=user.email, email=email, token=password_reset_token
         )
@@ -102,7 +105,7 @@ def reset_password(session: SessionDep, body: NewPassword) -> Message:
     """
     Reset password
     """
-    email = verify_password_reset_token(token=body.token)
+    email = verify_password_reset_token(token=body.token, session=session)
     if not email:
         raise HTTPException(status_code=400, detail="Invalid token")
     user = crud.get_user_by_email(session=session, email=email)
@@ -136,7 +139,9 @@ def recover_password_html_content(email: str, session: SessionDep) -> Any:
             status_code=404,
             detail="The user with this username does not exist in the system.",
         )
-    password_reset_token = generate_password_reset_token(email=email)
+
+    # Pass session to generate function to persist token
+    password_reset_token = generate_password_reset_token(session=session, email=email)
     email_data = generate_reset_password_email(
         email_to=user.email, email=email, token=password_reset_token
     )
