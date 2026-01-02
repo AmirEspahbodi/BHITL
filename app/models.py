@@ -79,7 +79,7 @@ class NewPassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
-class Principle(UserBase, table=True):
+class Principle(SQLModel, table=True):
     id: int = Field(primary_key=True)
     name: str
     definition: str
@@ -90,7 +90,7 @@ class Principle(UserBase, table=True):
     comments: list["Comment"] = Relationship(back_populates="principle")
 
 
-class Comment(UserBase, table=True):
+class Comment(SQLModel, table=True):
     id: int = Field(primary_key=True)
     preceding: str | None = None
     target: str
