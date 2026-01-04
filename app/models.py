@@ -86,8 +86,6 @@ class Principle(SQLModel, table=True):
     context_rule: str | None = None
     inclusion_criteria: str | None = None
     exclusion_criteria: str | None = None
-
-    # Relationship: One Principle has many Comments
     comments: list["Comment"] = Relationship(back_populates="principle")
 
 
