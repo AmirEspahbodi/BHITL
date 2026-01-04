@@ -6,8 +6,9 @@ from sqlmodel import select
 
 from app.models import Principle
 
-router = APIRouter(prefix="//principles", tags=["/principles"])
+router = APIRouter(prefix="/principles", tags=["/principles"])
 from app.api.deps import (
+    CurrentUser,
     SessionDep,
     get_current_active_superuser,
 )
@@ -26,7 +27,7 @@ class PrinciplesSchemaResponse(BaseModel):
 
 
 @router.get(
-    "/",
+    "",
     response_model=PrinciplesSchemaResponse,
 )
 async def get_principles(*, session: SessionDep, current_user: CurrentUser) -> Any:
