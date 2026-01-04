@@ -6,7 +6,7 @@ from sqlmodel import select
 
 from app.models import Comment as Sample
 
-router = APIRouter(prefix="/samples", tags=["/samples"])
+router = APIRouter(prefix="/sampe", tags=["/principles"])
 from app.api.deps import (
     CurrentUser,
     SessionDep,
@@ -14,7 +14,7 @@ from app.api.deps import (
 )
 
 
-class SampleSchema(BaseModel):
+class PrincipleSchema(BaseModel):
     id: str
     label_name: str
     definition: str
@@ -22,23 +22,23 @@ class SampleSchema(BaseModel):
     exclusion_criteria: str
 
 
-class SampleSchemaResponse(BaseModel):
-    samples: list[SampleSchema]
+class PrinciplesSchemaResponse(BaseModel):
+    principles: list[PrincipleSchema]
 
 
 @router.get(
     "",
-    response_model=SampleSchemaResponse,
+    response_model=PrinciplesSchemaResponse,
 )
 async def get_principles(*, session: SessionDep, current_user: CurrentUser) -> Any:
     """
     Fetch all principles and map them to the response schema.
     """
-    statement = select(Sample)
+    statement = select(Principle)
     results = session.exec(statement).all()
 
     principles_list = [
-        SampleSchema(
+        PrincipleSchema(
             id=principle.id,
             label_name=principle.name,
             definition=principle.definition,
@@ -47,4 +47,4 @@ async def get_principles(*, session: SessionDep, current_user: CurrentUser) -> A
         )
         for principle in results
     ]
-    return SampleSchemaResponse(samples=principles_list)
+    return PrinciplesSchemaResponse(principles=principles_list)
