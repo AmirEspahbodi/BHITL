@@ -40,6 +40,7 @@ class UserCommentRevision(SQLModel, table=True):
     comment_id: str = Field(foreign_key="comment.id")
     principle_id: str = Field(foreign_key="principle.id")
     expert_opinion: str | None = None
+    is_revise_completed: bool = False
     updated_at: datetime | None = None
     created_at: datetime | None = None
 

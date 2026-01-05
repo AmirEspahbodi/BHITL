@@ -1,18 +1,20 @@
-from typing import Any, Dict, List
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import and_
 from sqlalchemy.orm import aliased
-from sqlmodel import Session, col, select
+from sqlmodel import Session, col, distinct, func, select
 
 from app.api.deps import (
     CurrentUser,
     SessionDep,
     get_current_active_superuser,
 )
-from app.models import Message, Principle
+from app.api.routes.common import DataRow
+from app.models import Comment, Message, Principle, User, UserCommentRevision  #
 
 router = APIRouter(prefix="/principles", tags=["/principles"])
 
@@ -103,20 +105,6 @@ async def update_principle(
     )
 
 
-from datetime import datetime
-from typing import Any, Optional
-
-from pydantic import BaseModel, Field
-from sqlmodel import distinct, func, select
-
-from app.api.routes.common import DataRow
-from app.models import Comment, Principle, User, UserCommentRevision  #
-
-# ... existing imports ...
-
-# --- Response Schemas for Samples ---
-
-
 class SampleStats(BaseModel):
     total: int
     revised: int
@@ -138,6 +126,7 @@ def get_principle_comments_with_revision_status(
             UserCommentRevision.created_at.label("revision_timestamp"),
             UserCommentRevision.updated_at,
             User.full_name.label("reviser_name"),
+            UserCommentRevision.is_revise_completed,
         )
         .where(Comment.principle_id == principle_id)
         .outerjoin(
@@ -157,6 +146,7 @@ def get_principle_comments_with_revision_status(
         revision_timestamp,
         updated_at,
         reviser_name,
+        is_revise_completed,
     ) in results:
         samples.append(
             {
@@ -171,7 +161,7 @@ def get_principle_comments_with_revision_status(
                 "llm_justification": comment.llm_justification,
                 "llm_evidence_quote": comment.llm_evidence_quote,
                 "expert_opinion": expert_opinion,
-                "isRevised": expert_opinion is not None,
+                "isRevised": is_revise_completed if is_revise_completed else False,
                 "reviserName": reviser_name,
                 "revisionTimestamp": revision_timestamp.isoformat()
                 if revision_timestamp
