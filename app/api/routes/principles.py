@@ -116,41 +116,60 @@ class SamplesResponse(BaseModel):
     stats: SampleStats
 
 
+from sqlalchemy import and_, or_  # Ensure these are imported from sqlalchemy
+
+
 def get_principle_comments_with_revision_status(
     session: Session, principle_id: str, current_user_id: UUID
 ) -> list[dict]:
+    """
+    Fetches comments that effectively belong to a principle based on the user's revision status.
+    Uses a single optimized query to handle logic for both revised and unrevised comments.
+    """
+    current_user_obj = session.get(User, current_user_id)
+    reviser_name = current_user_obj.full_name if current_user_obj else ""
+
     statement = (
-        select(
-            Comment,
-            UserCommentRevision.expert_opinion,
-            UserCommentRevision.created_at,
-            UserCommentRevision.updated_at,
-            User.full_name.label("reviser_name"),
-            UserCommentRevision.is_revise_completed,
-            UserCommentRevision.principle_id,
-        )
-        .where(Comment.principle_id == principle_id)
+        select(Comment, UserCommentRevision)
         .outerjoin(
             UserCommentRevision,
-            (UserCommentRevision.comment_id == Comment.id)
-            & (UserCommentRevision.user_id == current_user_id),
+            and_(
+                Comment.id == UserCommentRevision.comment_id,
+                UserCommentRevision.user_id == current_user_id,
+            ),
         )
-        .outerjoin(User, User.id == UserCommentRevision.user_id)
+        .where(
+            or_(
+                and_(
+                    UserCommentRevision.id.is_not(None),
+                    UserCommentRevision.is_revise_completed.is_(True),
+                    UserCommentRevision.principle_id == principle_id,
+                ),
+                and_(
+                    or_(
+                        UserCommentRevision.id.is_(None),
+                        UserCommentRevision.is_revise_completed.is_(False),
+                    ),
+                    Comment.principle_id == principle_id,
+                ),
+            )
+        )
     )
 
     results = session.exec(statement).all()
 
     samples = []
-    for (
-        comment,
-        expert_opinion,
-        created_at,
-        updated_at,
-        updated_at,
-        reviser_name,
-        is_revise_completed,
-        user_principle_id,
-    ) in results:
+    for comment, revision in results:
+        is_revised = revision.is_revise_completed if revision else False
+        effective_principle_id = (
+            revision.principle_id if is_revised else comment.principle_id
+        )
+        revision_timestamp = None
+        if revision:
+            revision_timestamp = (
+                revision.updated_at if revision.updated_at else revision.created_at
+            )
+
         samples.append(
             {
                 "id": comment.id,
@@ -160,15 +179,13 @@ def get_principle_comments_with_revision_status(
                 "A1_Score": comment.A1_Score,
                 "A2_Score": comment.A2_Score,
                 "A3_Score": comment.A3_Score,
-                "principle_id": user_principle_id
-                if user_principle_id
-                else comment.principle_id,
+                "principle_id": effective_principle_id,
                 "llm_justification": comment.llm_justification,
                 "llm_evidence_quote": comment.llm_evidence_quote,
-                "expert_opinion": expert_opinion,
-                "isRevised": is_revise_completed if is_revise_completed else False,
-                "reviserName": reviser_name,
-                "revisionTimestamp": updated_at if updated_at else created_at,
+                "expert_opinion": revision.expert_opinion if revision else None,
+                "isRevised": is_revised,
+                "reviserName": reviser_name if is_revised else None,
+                "revisionTimestamp": revision_timestamp,
             }
         )
 

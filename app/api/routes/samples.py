@@ -228,7 +228,7 @@ async def toggle_sample_revision(
 
 
 class ToggleSampleReassignRequest(BaseModel):
-    target_principle_id: bool
+    target_principle_id: str
     reviser_name: str
 
 
