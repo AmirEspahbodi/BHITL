@@ -123,10 +123,11 @@ def get_principle_comments_with_revision_status(
         select(
             Comment,
             UserCommentRevision.expert_opinion,
-            UserCommentRevision.created_at.label("revision_timestamp"),
+            UserCommentRevision.created_at,
             UserCommentRevision.updated_at,
             User.full_name.label("reviser_name"),
             UserCommentRevision.is_revise_completed,
+            UserCommentRevision.principle_id,
         )
         .where(Comment.principle_id == principle_id)
         .outerjoin(
@@ -143,10 +144,12 @@ def get_principle_comments_with_revision_status(
     for (
         comment,
         expert_opinion,
-        revision_timestamp,
+        created_at,
+        updated_at,
         updated_at,
         reviser_name,
         is_revise_completed,
+        user_principle_id,
     ) in results:
         samples.append(
             {
@@ -157,15 +160,15 @@ def get_principle_comments_with_revision_status(
                 "A1_Score": comment.A1_Score,
                 "A2_Score": comment.A2_Score,
                 "A3_Score": comment.A3_Score,
-                "principle_id": comment.principle_id,
+                "principle_id": user_principle_id
+                if user_principle_id
+                else comment.principle_id,
                 "llm_justification": comment.llm_justification,
                 "llm_evidence_quote": comment.llm_evidence_quote,
                 "expert_opinion": expert_opinion,
                 "isRevised": is_revise_completed if is_revise_completed else False,
                 "reviserName": reviser_name,
-                "revisionTimestamp": revision_timestamp.isoformat()
-                if revision_timestamp
-                else None,
+                "revisionTimestamp": updated_at if updated_at else created_at,
             }
         )
 

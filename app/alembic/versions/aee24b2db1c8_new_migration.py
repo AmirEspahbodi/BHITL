@@ -1,8 +1,8 @@
 """New Migration
 
-Revision ID: 6c13cece6af7
+Revision ID: aee24b2db1c8
 Revises: 
-Create Date: 2026-01-04 20:52:09.049371
+Create Date: 2026-01-05 09:30:30.936549
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlmodel.sql.sqltypes
 
 
 # revision identifiers, used by Alembic.
-revision = '6c13cece6af7'
+revision = 'aee24b2db1c8'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -65,6 +65,7 @@ def upgrade():
     sa.Column('comment_id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('principle_id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('expert_opinion', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('is_revise_completed', sa.Boolean(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['comment_id'], ['comment.id'], ),

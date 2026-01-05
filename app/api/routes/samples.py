@@ -35,9 +35,11 @@ async def get_sample(
         select(
             Sample,
             UserCommentRevision.expert_opinion,
-            UserCommentRevision.created_at.label("revision_timestamp"),
+            UserCommentRevision.updated_at,
+            UserCommentRevision.created_at,
             User.full_name.label("reviser_name"),
             UserCommentRevision.is_revise_completed,
+            UserCommentRevision.principle_id.label("user_principle_id"),
         )
         .where(Sample.id == sample_id)
         .outerjoin(
@@ -53,9 +55,15 @@ async def get_sample(
     if not result:
         raise HTTPException(status_code=404, detail="Sample not found")
 
-    sample, expert_opinion, revision_timestamp, reviser_name, is_revise_completed = (
-        result
-    )
+    (
+        sample,
+        expert_opinion,
+        updated_at,
+        created_at,
+        reviser_name,
+        is_revise_completed,
+        user_principle_id,
+    ) = result
 
     data_row = DataRow(
         id=sample.id,
@@ -65,13 +73,13 @@ async def get_sample(
         A1_Score=sample.A1_Score,
         A2_Score=sample.A2_Score,
         A3_Score=sample.A3_Score,
-        principle_id=sample.principle_id,
+        principle_id=user_principle_id if user_principle_id else sample.principle_id,
         llm_justification=sample.llm_justification,
         llm_evidence_quote=sample.llm_evidence_quote,
         expert_opinion=expert_opinion,
         is_revised=is_revise_completed if is_revise_completed else False,
         reviser_name=reviser_name,
-        revision_timestamp=revision_timestamp,
+        revision_timestamp=updated_at if updated_at else created_at,
     )
 
     return SampleResponse(sample=data_row)
@@ -138,7 +146,7 @@ async def update_add_opinion(
         A1_Score=sample.A1_Score,
         A2_Score=sample.A2_Score,
         A3_Score=sample.A3_Score,
-        principle_id=sample.principle_id,
+        principle_id=revision.principle_id,
         llm_justification=sample.llm_justification,
         llm_evidence_quote=sample.llm_evidence_quote,
         expert_opinion=revision.expert_opinion,
@@ -152,6 +160,7 @@ async def update_add_opinion(
 
 class ToggleSampleRevisionRequest(BaseModel):
     is_revised: bool
+    reviser_name: str
 
 
 @router.patch("/{sample_id}/revision", response_model=SampleResponse)
@@ -207,7 +216,77 @@ async def toggle_sample_revision(
         A1_Score=sample.A1_Score,
         A2_Score=sample.A2_Score,
         A3_Score=sample.A3_Score,
-        principle_id=sample.principle_id,
+        principle_id=revision.principle_id,
+        llm_justification=sample.llm_justification,
+        llm_evidence_quote=sample.llm_evidence_quote,
+        expert_opinion=revision.expert_opinion,
+        is_revised=revision.is_revise_completed,
+        reviser_name=current_user.full_name,
+        revision_timestamp=revision.updated_at or revision.created_at,
+    )
+    return SampleResponse(sample=data_row)
+
+
+class ToggleSampleReassignRequest(BaseModel):
+    target_principle_id: bool
+    reviser_name: str
+
+
+@router.patch("/{sample_id}/reassign", response_model=SampleResponse)
+async def toggle_sample_reassign(
+    sample_id: str,
+    session: SessionDep,
+    request: ToggleSampleReassignRequest,
+    current_user: CurrentUser,
+):
+    statement = (
+        select(Sample, UserCommentRevision)
+        .where(Sample.id == sample_id)
+        .outerjoin(
+            UserCommentRevision,
+            (UserCommentRevision.comment_id == Sample.id)
+            & (UserCommentRevision.user_id == current_user.id),
+        )
+    )
+
+    result = session.exec(statement).first()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Sample not found")
+
+    sample, revision = result
+
+    now = datetime.now(timezone.utc)
+
+    if revision:
+        revision.principle_id = request.target_principle_id
+        revision.is_revise_completed = True
+        revision.updated_at = now
+        session.add(revision)
+    else:
+        revision = UserCommentRevision(
+            user_id=current_user.id,
+            comment_id=sample.id,
+            principle_id=request.target_principle_id,
+            expert_opinion="",
+            is_revise_completed=True,
+            created_at=now,
+            updated_at=now,
+        )
+        session.add(revision)
+
+    session.commit()
+    session.refresh(revision)
+
+    data_row = DataRow(
+        id=sample.id,
+        preceding=sample.preceding,
+        target=sample.target,
+        following=sample.following,
+        A1_Score=sample.A1_Score,
+        A2_Score=sample.A2_Score,
+        A3_Score=sample.A3_Score,
+        principle_id=revision.principle_id,
         llm_justification=sample.llm_justification,
         llm_evidence_quote=sample.llm_evidence_quote,
         expert_opinion=revision.expert_opinion,
