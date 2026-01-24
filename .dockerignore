@@ -1,175 +1,75 @@
-# ============================================================================
-# Docker Ignore File - Prevents Sensitive Files from Being Copied to Image
-# ============================================================================
-# CRITICAL: This file prevents secrets from being baked into Docker images
-# Last Updated: 2026-01-02
-# ============================================================================
-
-# ============================================================================
-# ENVIRONMENT FILES (HIGHEST SECURITY PRIORITY)
-# ============================================================================
-# Never copy environment files containing secrets into Docker images
-.env
-.env.*
-*.env
-.env.local
-.env.development
-.env.staging
-.env.production
-.env.test
-.env.backup
-**/.env
-**/.env.*
-
-# ============================================================================
-# VERSION CONTROL
-# ============================================================================
-.git
-.gitignore
-.gitattributes
-.gitmodules
-**/.git
-
-# ============================================================================
-# PYTHON ARTIFACTS
-# ============================================================================
-__pycache__/
+# Python cache
+__pycache__
 *.py[cod]
 *$py.class
 *.so
 .Python
-*.egg
-*.egg-info/
-dist/
-build/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-pip-log.txt
-pip-delete-this-directory.txt
 
-# ============================================================================
-# TESTING & COVERAGE
-# ============================================================================
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.nox/
-.pytest_cache/
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.hypothesis/
-.pyre/
-.pytype/
-coverage.xml
-*.cover
-.cache
-nosetests.xml
-test-results/
-junit/
+# Virtual environments
+venv
+env
+ENV
+.venv
 
-# ============================================================================
-# IDE & EDITOR FILES
-# ============================================================================
-.vscode/
-.idea/
+# Distribution / packaging
+build
+dist
+*.egg-info
+.eggs
+
+# Environment files
+.env
+.env.*
+
+# IDE
+.vscode
+.idea
 *.swp
 *.swo
-*.swn
 *~
+
+# OS files
 .DS_Store
-*.sublime-project
-*.sublime-workspace
-.project
-.pydevproject
-.settings/
-*.code-workspace
+Thumbs.db
 
-# ============================================================================
-# CI/CD & DEPLOYMENT
-# ============================================================================
-.github/
-.gitlab-ci.yml
-.travis.yml
-.circleci/
-azure-pipelines.yml
-Jenkinsfile
-.dockerignore
-docker-compose.override.yml
-docker-compose.local.yml
+# Git
+.git
+.gitignore
+.gitattributes
 
-# ============================================================================
-# DOCUMENTATION (Optional - Uncomment to Exclude)
-# ============================================================================
-# README.md
-# docs/
-# *.md
+# Documentation
+README.md
+*.md
+docs
 
-# ============================================================================
-# LOGS & TEMPORARY FILES
-# ============================================================================
-*.log
-logs/
-*.tmp
-*.temp
-tmp/
-temp/
+# Tests
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.mypy_cache
+.ruff_cache
+tests
+test_*.py
 
-# ============================================================================
-# DATABASE FILES (Local Development)
-# ============================================================================
+# Database
 *.db
 *.sqlite
 *.sqlite3
-db.sqlite3
 
-# ============================================================================
-# SECRETS & CERTIFICATES
-# ============================================================================
-*.pem
-*.key
-*.crt
-*.cer
-*.p12
-*.pfx
-secrets/
-certs/
+# Logs
+*.log
+logs
 
-# ============================================================================
-# BACKUP FILES
-# ============================================================================
-*.bak
-*.backup
-*.old
-*~
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
 
-# ============================================================================
-# OS-SPECIFIC FILES
-# ============================================================================
-Thumbs.db
-Desktop.ini
-.Spotlight-V100
-.Trashes
+# Alembic (if not needed in container)
+# alembic
 
-# ============================================================================
-# PROJECT-SPECIFIC EXCLUSIONS
-# ============================================================================
-# Add any project-specific files that should not be in the Docker image
-node_modules/
-frontend/node_modules/
-venv/
-.venv/
-ENV/
-env/
+# Misc
+.dockerignore
+Dockerfile
+docker-compose*.yml
