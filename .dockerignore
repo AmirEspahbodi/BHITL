@@ -38,8 +38,8 @@ Thumbs.db
 .gitattributes
 
 # Documentation
-README.md
-*.md
+#README.md
+#*.md
 docs
 
 # Tests
