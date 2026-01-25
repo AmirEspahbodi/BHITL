@@ -62,10 +62,15 @@ def login_access_token(
         raise HTTPException(status_code=400, detail="Inactive user")
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    # Determine user type
+    user_type = "superuser" if user.is_superuser else "normal"
+
     return Token(
         access_token=security.create_access_token(
             user.id, expires_delta=access_token_expires
-        )
+        ),
+        user_type=user_type,
     )
 
 

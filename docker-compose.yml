@@ -35,23 +35,6 @@ services:
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
     ports:
       - "127.0.0.1:8080:5432"
-  pgadmin:
-    container_name: pgadmin
-    image: dpage/pgadmin4
-    restart: always
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_USER?Variable not set}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD?Variable not set}
-    ports:
-      - "127.0.0.1:8088:80"
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-    depends_on:
-      - db
-    links:
-      - "db:pgsql-server"
-    env_file:
-      - ./.env
 volumes:
   app-db-data:
   pgadmin-data:

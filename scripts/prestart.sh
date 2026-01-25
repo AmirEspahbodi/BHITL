@@ -11,6 +11,3 @@ poetry run alembic revision --autogenerate -m "New Migration"
 
 echo "Upgrade migrations"
 poetry run alembic upgrade head
-
-echo "Create initial data in DB"
-poetry run python -m app.initial_data

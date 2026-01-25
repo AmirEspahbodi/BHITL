@@ -98,6 +98,18 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
 
+    USER_1_EMAIL: EmailStr
+    USER_1_FULL_NAME: str
+    USER_1_PASSWORD: str
+
+    USER_2_EMAIL: EmailStr
+    USER_2_FULL_NAME: str
+    USER_2_PASSWORD: str
+
+    USER_3_EMAIL: EmailStr
+    USER_3_FULL_NAME: str
+    USER_3_PASSWORD: str
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (

@@ -89,6 +89,25 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     return Message(message="User deleted successfully")
 
 
+@router.get(
+    "/non-superusers",
+    dependencies=[Depends(get_current_active_superuser)],
+    response_model=list[UserPublic],
+    response_model_exclude={"is_superuser", "is_active"},
+)
+def read_non_super_users(
+    session: SessionDep,
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """
+    Get list of non-super users.
+    """
+    statement = select(User).where(User.is_superuser == False).offset(skip).limit(limit)
+    users = session.exec(statement).all()
+    return users
+
+
 @router.get("/{user_id}", response_model=UserPublic)
 def read_user_by_id(
     user_id: uuid.UUID, session: SessionDep, current_user: CurrentUser

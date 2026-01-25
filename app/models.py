@@ -53,7 +53,6 @@ class User(UserBase, table=True):
         back_populates="revisers", link_model=UserCommentRevision
     )
 
-
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: uuid.UUID
@@ -68,6 +67,7 @@ class Message(SQLModel):
 class Token(SQLModel):
     access_token: str
     token_type: str = "bearer"
+    user_type: str
 
 
 # Contents of JWT token
