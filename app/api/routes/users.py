@@ -2,7 +2,7 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import col, delete, func, select
+from sqlmodel import SQLModel, func, select
 
 from app import crud
 from app.api.deps import (
@@ -16,6 +16,7 @@ from app.models import (
     Message,
     UpdatePassword,
     User,
+    UserCommentRevision,
     UserPublic,
     UserUpdate,
     UserUpdateMe,
@@ -23,6 +24,64 @@ from app.models import (
 from app.utils import send_email
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+# New Pydantic models for the response
+class UserReviseStats(UserPublic):
+    revised_count: int
+
+
+class NonSuperUsersResponse(SQLModel):
+    total_comments: int
+    users: list[UserReviseStats]
+
+
+@router.get(
+    "/non-superusers",
+    dependencies=[Depends(get_current_active_superuser)],
+    response_model=NonSuperUsersResponse,
+)
+def read_non_super_users(
+    session: SessionDep,
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """
+    Get list of non-super users with their completed revision count and the global total of completed revisions.
+    """
+    # 1. Calculate global total of completed revisions by non-superusers
+    count_statement = (
+        select(func.count(UserCommentRevision.id))
+        .join(User, User.id == UserCommentRevision.user_id)
+        .where(User.is_superuser == False)
+        .where(UserCommentRevision.is_revise_completed == True)
+    )
+    total_comments = session.exec(count_statement).one()
+
+    # 2. Get list of non-superusers with their individual revision counts
+    statement = (
+        select(User, func.count(UserCommentRevision.id))
+        .outerjoin(
+            UserCommentRevision,
+            (User.id == UserCommentRevision.user_id)
+            & (UserCommentRevision.is_revise_completed == True),
+        )
+        .where(User.is_superuser == False)
+        .group_by(User.id)
+        .offset(skip)
+        .limit(limit)
+    )
+
+    results = session.exec(statement).all()
+
+    # 3. Format the data
+    users_data = []
+    for user, count in results:
+        user_dict = user.model_dump()
+        user_dict["revised_count"] = count
+        users_data.append(user_dict)
+
+    return NonSuperUsersResponse(total_comments=total_comments, users=users_data)
 
 
 @router.patch("/me", response_model=UserPublic)
@@ -87,25 +146,6 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     session.delete(current_user)
     session.commit()
     return Message(message="User deleted successfully")
-
-
-@router.get(
-    "/non-superusers",
-    dependencies=[Depends(get_current_active_superuser)],
-    response_model=list[UserPublic],
-    response_model_exclude={"is_superuser", "is_active"},
-)
-def read_non_super_users(
-    session: SessionDep,
-    skip: int = 0,
-    limit: int = 100,
-) -> Any:
-    """
-    Get list of non-super users.
-    """
-    statement = select(User).where(User.is_superuser == False).offset(skip).limit(limit)
-    users = session.exec(statement).all()
-    return users
 
 
 @router.get("/{user_id}", response_model=UserPublic)
