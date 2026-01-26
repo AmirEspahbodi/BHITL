@@ -36,7 +36,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
     ports:
-      - "127.0.0.1:8080:5432"
+      - "127.0.0.1:5433:5432"
 volumes:
   app-db-data:
   pgadmin-data:
