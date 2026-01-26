@@ -1,7 +1,8 @@
+import json
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlmodel import SQLModel, func, select
 
 from app import crud
@@ -215,3 +216,52 @@ def delete_user(
     session.delete(user)
     session.commit()
     return Message(message="User deleted successfully")
+
+
+@router.get("/{user_id}/get-dataset")
+def get_user_dataset(
+    user_id: uuid.UUID,
+    session: SessionDep,
+    current_user: CurrentUser,
+) -> Any:
+    """
+    Generate and download a JSON dataset of completed revisions for a specific user.
+    """
+    # 1. Authorization Check
+    # Ensure the current user is requesting their own data, or is a superuser
+    if current_user.id != user_id and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=403,
+            detail="The user doesn't have enough privileges",
+        )
+
+    # 2. Query the UserCommentRevision table
+    # Filter by the specific user_id and only include completed revisions
+    statement = (
+        select(UserCommentRevision)
+        .where(UserCommentRevision.user_id == user_id)
+        .where(UserCommentRevision.is_revise_completed == True)
+    )
+    results = session.exec(statement).all()
+
+    # 3. Create the dataset list
+    # Extract only comment_id and principle_id as requested
+    dataset = [
+        {"comment_id": record.comment_id, "principle_id": record.principle_id}
+        for record in results
+    ]
+
+    # 4. Serialize to JSON
+    # using ensure_ascii=False is good practice if IDs might contain non-ascii chars,
+    # though unlikely for IDs. indent=2 makes it human-readable.
+    json_content = json.dumps(dataset, indent=2)
+
+    # 5. Return the Response
+    # Setting Content-Disposition attachment forces the browser to download the file
+    # rather than displaying it.
+    filename = f"dataset_{user_id}.json"
+    return Response(
+        content=json_content,
+        media_type="application/json",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
