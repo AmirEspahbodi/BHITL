@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     ] = [
         AnyHttpUrl("http://localhost:3333"),
         AnyHttpUrl("http://localhost:5173"),
+        AnyHttpUrl("http://localhost:80"),
+        AnyHttpUrl("http://localhost"),
+        AnyHttpUrl("http://localhost:3000"),
     ]
 
     @computed_field  # type: ignore[prop-decorator]
