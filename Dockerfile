@@ -87,8 +87,8 @@ FROM example-app-base AS example-app-final
 COPY --chown=$APP_USER:$APP_USER app/ $APP_HOME/app/
 COPY --chown=$APP_USER:$APP_USER scripts/ $APP_HOME/scripts/
 COPY --chown=$APP_USER:$APP_USER alembic.ini $APP_HOME/alembic.ini
-# COPY --chown=$APP_USER:$APP_USER principles.json $APP_HOME/principles.json
-# COPY --chown=$APP_USER:$APP_USER samples.json $APP_HOME/samples.json
+COPY --chown=$APP_USER:$APP_USER principles.json $APP_HOME/principles.json
+COPY --chown=$APP_USER:$APP_USER samples.json $APP_HOME/samples.json
 
 # Ensure scripts are executable (Note: Volume mount will override this, ensure local scripts are +x)
 RUN chmod +x $APP_HOME/scripts/*
