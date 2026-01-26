@@ -13,7 +13,7 @@ WORKDIR $APP_HOME
 # Set timezone and install tzdata
 ENV TZ='Asia/Tehran'
 RUN echo $TZ > /etc/timezone && apt-get update && \
-    apt-get install -y --no-install-recommends tzdata && \
+    apt-get install -y --no-install-recommends tzdata curl && \
     rm -f /etc/localtime && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
     dpkg-reconfigure -f noninteractive tzdata && \
@@ -25,7 +25,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=$APP_HOME
 
 # Poetry environment variables
-ENV POETRY_VERSION=2.2.1
+ENV POETRY_VERSION=2.3.1
 ENV POETRY_HOME=$APP_HOME/poetry
 ENV POETRY_VENV=/opt/poetry-venv
 
@@ -99,9 +99,9 @@ USER $APP_USER
 # Expose internal port
 EXPOSE 3000
 
-# Health check
+# # Health check
 # HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 #     CMD curl -f http://localhost:3000/health || exit 1
 
-# Run the application with uvicorn
-CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3000", "--workers", "2", "--log-level", "info"]
+# # Run the application with uvicorn
+# CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3000", "--workers", "2", "--log-level", "info"]
