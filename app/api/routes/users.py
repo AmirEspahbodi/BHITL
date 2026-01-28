@@ -18,6 +18,7 @@ from app.models import (
     UpdatePassword,
     User,
     UserCommentRevision,
+    UserCreate,
     UserPublic,
     UserUpdate,
     UserUpdateMe,
@@ -35,6 +36,22 @@ class UserReviseStats(UserPublic):
 class NonSuperUsersResponse(SQLModel):
     total_comments: int
     users: list[UserReviseStats]
+
+
+@router.post(
+    "/",
+    dependencies=[Depends(get_current_active_superuser)],
+    response_model=UserPublic,
+)
+def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
+    user = crud.get_user_by_email(session=session, email=user_in.email)
+    if user:
+        raise HTTPException(
+            status_code=400,
+            detail="The user with this email already exists in the system",
+        )
+    user = crud.create_user(session=session, user_create=user_in)
+    return user
 
 
 @router.get(
